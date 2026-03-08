@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reisekostenabrechnung 2026</title>
+    <style>
+        :root {
+            --color-primary: #2980b9;
+            --color-primary-hover: #3498db;
+            --color-success: #27ae60;
+            --color-danger: #e74c3c;
+            --color-bg: #f8f9fa;
+            --color-card: #ffffff;
+            --color-border: #dee2e6;
+            --color-text: #212529;
+            --color-text-muted: #6c757d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--color-card);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: var(--color-primary);
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: var(--color-text-muted);
+            font-size: 14px;
+        }
+
+        .form-section {
+            background: var(--color-card);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-section h2 {
+            color: var(--color-primary);
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--color-text);
+        }
+
+        .label-info {
+            font-weight: normal;
+            color: var(--color-text-muted);
+            font-size: 12px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-weight: normal;
+        }
+
+        .result-box {
+            background: #e8f5e9;
+            border: 2px solid var(--color-success);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .result-box h3 {
+            color: var(--color-success);
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid var(--color-success);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .expense-item {
+            background: #f8f9fa;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .expense-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .remove-btn {
+            background: var(--color-danger);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .remove-btn:hover {
+            background: #c0392b;
+        }
+
+        .add-btn {
+            background: transparent;
+            border: 2px dashed var(--color-primary);
+            color: var(--color-primary);
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .add-btn:hover {
+            background: rgba(41, 128, 185, 0.1);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            padding: 10px 5px;
+        }
+
+        .progress-step::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: var(--color-border);
+            z-index: -1;
+        }
+
+        .progress-step:first-child::before {
+            display: none;
+        }
+
+        .progress-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            border-radius: 50%;
+            background: var(--color-border);
+            color: var(--color-text-muted);
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .progress-step.active .progress-number {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .progress-step.completed .progress-number {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+
+        .progress-step.active .progress-label {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Reisekostenabrechnung 2026</h1>
+            <p>Rechtssichere Abrechnung nach aktuellen Pauschalen</p>
+        </div>
+
+        <div class="progress-indicator">
+            <div class="progress-step active" id="step1-indicator">
+                <span class="progress-number">1</span>
+                <div class="progress-label">Persönliche Daten</div>
+            </div>
+            <div class="progress-step" id="step2-indicator">
+                <span class="progress-number">2</span>
+                <div class="progress-label">Reisedaten</div>
+            </div>
+            <div class="progress-step" id="step3-indicator">
+                <span class="progress-number">3</span>
+                <div class="progress-label">Kosten</div>
+            </div>
+            <div class="progress-step" id="step4-indicator">
+                <span class="progress-number">4</span>
+                <div class="progress-label">Übersicht</div>
+            </div>
+        </div>
+
+        <form id="reisekostenForm">
+            <!-- Step 1: Persönliche Daten -->
+            <div id="step1" class="form-section">
+                <h2>1. Persönliche Daten</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vorname">Vorname *</label>
+                        <input type="text" id="vorname" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nachname">Nachname *</label>
+                        <input type="text" id="nachname" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="personalnummer">Personalnummer</label>
+                        <input type="text" id="personalnummer">
+                    </div>
+                    <div class="form-group">
+                        <label for="abteilung">Abteilung</label>
+                        <input type="text" id="abteilung">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="vorgesetzter">Vorgesetzte/r</label>
+                    <input type="text" id="vorgesetzter">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="nextStep(2)">Weiter →</button>
+            </div>
+
+            <!-- Step 2: Reisedaten -->
+            <div id="step2" class="form-section hidden">
+                <h2>2. Reisedaten</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reisebeginn">Reisebeginn *</label>
+                        <input type="date" id="reisebeginn" required onchange="calculateDuration()">
+                    </div>
+                    <div class="form-group">
+                        <label for="uhrzeit_beginn">Uhrzeit Beginn *</label>
+                        <input type="time" id="uhrzeit_beginn" required onchange="calculateDuration()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reiseende">Reiseende *</label>
+                        <input type="date" id="reiseende" required onchange="calculateDuration()">
+                    </div>
+                    <div class="form-group">
+                        <label for="uhrzeit_ende">Uhrzeit Ende *</label>
+                        <input type="time" id="uhrzeit_ende" required onchange="calculateDuration()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reiseziel">Reiseziel *</label>
+                    <input type="text" id="reiseziel" required placeholder="z.B. Stuttgart, Berlin">
+                </div>
+                <div class="form-group">
+                    <label for="reisezweck">Reisezweck *</label>
+                    <input type="text" id="reisezweck" required placeholder="z.B. Kundenbesuch, Messebesuch">
+                </div>
+                <div class="form-group">
+                    <label for="verkehrsmittel">Verkehrsmittel *</label>
+                    <select id="verkehrsmittel" required onchange="toggleKilometer()">
+                        <option value="">Bitte wählen</option>
+                        <option value="PKW">PKW (privat)</option>
+                        <option value="Bahn">Bahn</option>
+                        <option value="Flugzeug">Flugzeug</option>
+                        <option value="Mietwagen">Mietwagen</option>
+                        <option value="Sonstige">Sonstige</option>
+                    </select>
+                </div>
+                <div class="form-group" id="kilometerGroup" style="display: none;">
+                    <label for="kilometer">Kilometer (Gesamt) *</label>
+                    <input type="number" id="kilometer" min="0" step="1" placeholder="z.B. 230">
+                    <div class="info-box">
+                        <strong>Kilometerpauschale 2026 für Dienstreisen: 0,30 €/km</strong>
+                        Geben Sie die Gesamtstrecke (Hin- und Rückfahrt) an.
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn" onclick="nextStep(1)" style="flex: 1; background: #6c757d; color: white;">← Zurück</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(3)" style="flex: 2;">Weiter →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Kosten -->
+            <div id="step3" class="form-section hidden">
+                <h2>3. Kosten</h2>
+                
+                <div class="info-box">
+                    <strong>Verpflegungspauschalen 2026 (Deutschland):</strong>
+                    8-24 Stunden: 14 € | Ab 24 Stunden: 28 € | An-/Abreisetag: je 14 €<br>
+                    <strong>Kürzungen:</strong> Frühstück -5,60 € | Mittag/Abendessen -11,20 €
+                </div>
+
+                <div class="form-group">
+                    <label>Verpflegungsmehraufwand wird automatisch berechnet</label>
+                    <div id="verpflegungInfo" style="background: #e3f2fd; padding: 10px; border-radius: 4px; margin-top: 5px; font-size: 14px;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Gestellte Mahlzeiten (werden abgezogen)</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="number" id="fruehstueck_anzahl" min="0" value="0" style="width: 60px;" onchange="calculateAll()">
+                            <label>× Frühstück (je 5,60 € Abzug)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="number" id="mittagessen_anzahl" min="0" value="0" style="width: 60px;" onchange="calculateAll()">
+                            <label>× Mittagessen (je 11,20 € Abzug)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="number" id="abendessen_anzahl" min="0" value="0" style="width: 60px;" onchange="calculateAll()">
+                            <label>× Abendessen (je 11,20 € Abzug)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="uebernachtungen">Anzahl Übernachtungen</label>
+                    <input type="number" id="uebernachtungen" min="0" value="0" step="1" onchange="calculateAll()">
+                </div>
+
+                <div class="form-group">
+                    <label for="uebernachtungskosten">Tatsächliche Übernachtungskosten (€)</label>
+                    <input type="number" id="uebernachtungskosten" min="0" value="0" step="0.01" onchange="calculateAll()">
+                </div>
+
+                <div class="form-group">
+                    <label>Sonstige Kosten</label>
+                    <div id="sonstigeKostenContainer"></div>
+                    <button type="button" class="add-btn" onclick="addSonstigeKosten()">+ Weitere Kosten hinzufügen</button>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn" onclick="nextStep(2)" style="flex: 1; background: #6c757d; color: white;">← Zurück</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(4)" style="flex: 2;">Übersicht anzeigen →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Übersicht -->
+            <div id="step4" class="form-section hidden">
+                <h2>4. Zusammenfassung</h2>
+                <div id="summaryContent"></div>
+                <div class="result-box">
+                    <h3>💰 Kostenübersicht</h3>
+                    <div class="result-item">
+                        <span>Fahrtkosten:</span>
+                        <span id="result_fahrt">0,00 €</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Übernachtungskosten:</span>
+                        <span id="result_uebernachtung">0,00 €</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Verpflegungsmehraufwand:</span>
+                        <span id="result_verpflegung">0,00 €</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Abzüge Mahlzeiten:</span>
+                        <span id="result_abzuege">0,00 €</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Sonstige Kosten:</span>
+                        <span id="result_sonstige">0,00 €</span>
+                    </div>
+                    <div class="result-item">
+                        <span>GESAMTKOSTEN:</span>
+                        <span id="result_gesamt">0,00 €</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn" onclick="nextStep(3)" style="flex: 1; background: #6c757d; color: white;">← Zurück</button>
+                    <button type="button" class="btn btn-success" onclick="generatePDF()" style="flex: 2;">📄 PDF erstellen</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let sonstigeKostenCounter = 0;
+
+        function nextStep(step) {
+            // Validate current step
+            if (step > currentStep) {
+                const currentStepElement = document.getElementById('step' + currentStep);
+                const inputs = currentStepElement.querySelectorAll('input[required], select[required]');
+                let valid = true;
+                
+                inputs.forEach(input => {
+                    if (!input.value) {
+                        input.style.borderColor = 'var(--color-danger)';
+                        valid = false;
+                    } else {
+                        input.style.borderColor = 'var(--color-border)';
+                    }
+                });
+
+                if (!valid) {
+                    alert('Bitte füllen Sie alle Pflichtfelder aus.');
+                    return;
+                }
+            }
+
+            // Hide all steps
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById('step' + i).classList.add('hidden');
+                document.getElementById('step' + i + '-indicator').classList.remove('active', 'completed');
+            }
+
+            // Show target step
+            document.getElementById('step' + step).classList.remove('hidden');
+            document.getElementById('step' + step + '-indicator').classList.add('active');
+
+            // Mark completed steps
+            for (let i = 1; i < step; i++) {
+                document.getElementById('step' + i + '-indicator').classList.add('completed');
+            }
+
+            currentStep = step;
+
+            // Calculate when moving to step 3 or 4
+            if (step >= 3) {
+                calculateAll();
+            }
+
+            // Generate summary when moving to step 4
+            if (step === 4) {
+                generateSummary();
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleKilometer() {
+            const verkehrsmittel = document.getElementById('verkehrsmittel').value;
+            const kilometerGroup = document.getElementById('kilometerGroup');
+            const kilometerInput = document.getElementById('kilometer');
+            
+            if (verkehrsmittel === 'PKW') {
+                kilometerGroup.style.display = 'block';
+                kilometerInput.required = true;
+            } else {
+                kilometerGroup.style.display = 'none';
+                kilometerInput.required = false;
+                kilometerInput.value = '';
+            }
+        }
+
+        function calculateDuration() {
+            const beginn = document.getElementById('reisebeginn').value;
+            const beginnZeit = document.getElementById('uhrzeit_beginn').value;
+            const ende = document.getElementById('reiseende').value;
+            const endeZeit = document.getElementById('uhrzeit_ende').value;
+
+            if (beginn && beginnZeit && ende && endeZeit) {
+                const start = new Date(beginn + 'T' + beginnZeit);
+                const end = new Date(ende + 'T' + endeZeit);
+                const hours = Math.abs(end - start) / 36e5;
+
+                if (currentStep >= 3) {
+                    calculateAll();
+                }
+            }
+        }
+
+        function calculateAll() {
+            const beginn = document.getElementById('reisebeginn').value;
+            const beginnZeit = document.getElementById('uhrzeit_beginn').value;
+            const ende = document.getElementById('reiseende').value;
+            const endeZeit = document.getElementById('uhrzeit_ende').value;
+
+            if (!beginn || !beginnZeit || !ende || !endeZeit) return;
+
+            const start = new Date(beginn + 'T' + beginnZeit);
+            const end = new Date(ende + 'T' + endeZeit);
+            const hours = Math.abs(end - start) / 36e5;
+            const days = Math.floor(hours / 24);
+
+            // Calculate Verpflegungsmehraufwand
+            let verpflegung = 0;
+            let verpflegungText = '';
+
+            if (hours < 8) {
+                verpflegungText = 'Keine Pauschale (unter 8 Stunden)';
+            } else if (days === 0) {
+                // Eintägige Reise (8-24h)
+                verpflegung = 14;
+                verpflegungText = 'Eintägig (8-24h): 1 × 14 € = 14 €';
+            } else {
+                // Mehrtägige Reise
+                const anreiseTag = 14;
+                const abreiseTag = 14;
+                const volleTage = days > 1 ? (days - 1) * 28 : 0;
+                verpflegung = anreiseTag + abreiseTag + volleTage;
+                
+                verpflegungText = `Anreisetag: 14 €<br>`;
+                if (days > 1) {
+                    verpflegungText += `${days - 1} volle Tag(e): ${days - 1} × 28 € = ${volleTage} €<br>`;
+                }
+                verpflegungText += `Abreisetag: 14 €<br>`;
+                verpflegungText += `<strong>Summe: ${verpflegung} €</strong>`;
+            }
+
+            document.getElementById('verpflegungInfo').innerHTML = verpflegungText;
+
+            // Abzüge für Mahlzeiten
+            const fruehstueck = parseInt(document.getElementById('fruehstueck_anzahl').value) || 0;
+            const mittagessen = parseInt(document.getElementById('mittagessen_anzahl').value) || 0;
+            const abendessen = parseInt(document.getElementById('abendessen_anzahl').value) || 0;
+            const abzuege = (fruehstueck * 5.60) + (mittagessen * 11.20) + (abendessen * 11.20);
+
+            // Fahrtkosten
+            const kilometer = parseFloat(document.getElementById('kilometer').value) || 0;
+            const fahrtkosten = kilometer * 0.30;
+
+            // Übernachtungskosten
+            const uebernachtungskosten = parseFloat(document.getElementById('uebernachtungskosten').value) || 0;
+
+            // Sonstige Kosten
+            let sonstigeKosten = 0;
+            document.querySelectorAll('.sonstige-kosten-betrag').forEach(input => {
+                sonstigeKosten += parseFloat(input.value) || 0;
+            });
+
+            // Update results
+            if (currentStep === 4) {
+                document.getElementById('result_fahrt').textContent = fahrtkosten.toFixed(2) + ' €';
+                document.getElementById('result_uebernachtung').textContent = uebernachtungskosten.toFixed(2) + ' €';
+                document.getElementById('result_verpflegung').textContent = verpflegung.toFixed(2) + ' €';
+                document.getElementById('result_abzuege').textContent = '-' + abzuege.toFixed(2) + ' €';
+                document.getElementById('result_sonstige').textContent = sonstigeKosten.toFixed(2) + ' €';
+                
+                const gesamt = fahrtkosten + uebernachtungskosten + verpflegung - abzuege + sonstigeKosten;
+                document.getElementById('result_gesamt').textContent = gesamt.toFixed(2) + ' €';
+            }
+        }
+
+        function addSonstigeKosten() {
+            sonstigeKostenCounter++;
+            const container = document.getElementById('sonstigeKostenContainer');
+            const div = document.createElement('div');
+            div.className = 'expense-item';
+            div.id = 'sonstige-' + sonstigeKostenCounter;
+            div.innerHTML = `
+                <div class="expense-item-header">
+                    <strong>Kostenposition #${sonstigeKostenCounter}</strong>
+                    <button type="button" class="remove-btn" onclick="removeSonstigeKosten(${sonstigeKostenCounter})">Entfernen</button>
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung</label>
+                    <input type="text" class="sonstige-kosten-beschreibung" placeholder="z.B. Parkgebühren, Telefon">
+                </div>
+                <div class="form-group">
+                    <label>Betrag (€)</label>
+                    <input type="number" class="sonstige-kosten-betrag" min="0" step="0.01" value="0" onchange="calculateAll()">
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeSonstigeKosten(id) {
+            document.getElementById('sonstige-' + id).remove();
+            calculateAll();
+        }
+
+        function generateSummary() {
+            const vorname = document.getElementById('vorname').value;
+            const nachname = document.getElementById('nachname').value;
+            const personalnummer = document.getElementById('personalnummer').value;
+            const abteilung = document.getElementById('abteilung').value;
+            const vorgesetzter = document.getElementById('vorgesetzter').value;
+            const reisebeginn = new Date(document.getElementById('reisebeginn').value).toLocaleDateString('de-DE');
+            const reiseende = new Date(document.getElementById('reiseende').value).toLocaleDateString('de-DE');
+            const reiseziel = document.getElementById('reiseziel').value;
+            const reisezweck = document.getElementById('reisezweck').value;
+            const verkehrsmittel = document.getElementById('verkehrsmittel').value;
+            const kilometer = document.getElementById('kilometer').value;
+
+            let html = `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                    <h3 style="margin-bottom: 10px;">Persönliche Daten</h3>
+                    <p><strong>Name:</strong> ${vorname} ${nachname}</p>
+                    ${personalnummer ? `<p><strong>Personalnummer:</strong> ${personalnummer}</p>` : ''}
+                    ${abteilung ? `<p><strong>Abteilung:</strong> ${abteilung}</p>` : ''}
+                    ${vorgesetzter ? `<p><strong>Vorgesetzte/r:</strong> ${vorgesetzter}</p>` : ''}
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                    <h3 style="margin-bottom: 10px;">Reisedaten</h3>
+                    <p><strong>Zeitraum:</strong> ${reisebeginn} bis ${reiseende}</p>
+                    <p><strong>Reiseziel:</strong> ${reiseziel}</p>
+                    <p><strong>Reisezweck:</strong> ${reisezweck}</p>
+                    <p><strong>Verkehrsmittel:</strong> ${verkehrsmittel}</p>
+                    ${kilometer ? `<p><strong>Kilometer:</strong> ${kilometer} km (à 0,30 €)</p>` : ''}
+                </div>
+            `;
+
+            // Sonstige Kosten
+            const sonstigeKostenElemente = document.querySelectorAll('.expense-item');
+            if (sonstigeKostenElemente.length > 0) {
+                html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 15px;"><h3 style="margin-bottom: 10px;">Sonstige Kosten</h3>';
+                sonstigeKostenElemente.forEach(element => {
+                    const beschreibung = element.querySelector('.sonstige-kosten-beschreibung').value;
+                    const betrag = element.querySelector('.sonstige-kosten-betrag').value;
+                    if (beschreibung && betrag > 0) {
+                        html += `<p><strong>${beschreibung}:</strong> ${parseFloat(betrag).toFixed(2)} €</p>`;
+                    }
+                });
+                html += '</div>';
+            }
+
+            document.getElementById('summaryContent').innerHTML = html;
+            calculateAll();
+        }
+
+        function generatePDF() {
+            alert('PDF-Generierung:\n\nDie vollständige PDF-Generierung erfordert eine serverseitige PHP-Implementierung mit einer Bibliothek wie TCPDF oder FPDF.\n\nAktuell würden die Daten an ein PHP-Script (z.B. generate_pdf.php) gesendet werden, das die PDF erstellt.\n\nAlternativ kann die Seite über den Browser gedruckt werden (Drucken → Als PDF speichern).\n\nFür die vollständige Implementierung benötigen Sie:\n1. Ein PHP-Backend mit PDF-Bibliothek\n2. Optional: Digitale Signatur\n3. Cloud-Speicher-Integration (z.B. Nextcloud API)');
+            
+            // Optional: Browser-Druck-Dialog öffnen
+            if (confirm('Möchten Sie die Seite jetzt über den Browser als PDF speichern?')) {
+                window.print();
+            }
+        }
+
+        // Initialize
+        window.onload = function() {
+            document.getElementById('reisebeginn').valueAsDate = new Date();
+            document.getElementById('reiseende').valueAsDate = new Date();
+            const now = new Date().toTimeString().slice(0, 5);
+            document.getElementById('uhrzeit_beginn').value = now;
+            document.getElementById('uhrzeit_ende').value = now;
+        };
+    </script>
+</body>
+</html>
+
