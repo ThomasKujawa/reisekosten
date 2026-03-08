@@ -540,8 +540,22 @@
                 </div>
             </div>
         </form>
+        <div>
+            <footer class="footer">
+                <p>
+                    Dieses Projekt ist privat und inoffiziell. Keine Gewähr für Richtigkeit, Vollständigkeit und Aktualität. Angaben zum Impressum sind unter <a href="https://github.com/ThomasKujawa/reisekosten/" target="_blank">https://github.com/</a> nachzulesen.
+                </p>
+                <?php
+                    $version = file_exists(__DIR__ . '/version.txt') 
+                        ? 'v' . trim(file_get_contents(__DIR__ . '/version.txt')) 
+                        : 'dev';
+                    ?>
+                    <p class="version" style="font-size: 0.85em; color: #666; margin-top: 10px;">
+                        Version: <?= htmlspecialchars($version) ?>
+                    </p>
+            </footer>
+        </div>
     </div>
-
     <script>
         let currentStep = 1;
         let sonstigeKostenCounter = 0;
