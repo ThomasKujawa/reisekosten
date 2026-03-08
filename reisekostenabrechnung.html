@@ -389,6 +389,13 @@
                     <label for="vorgesetzter">Vorgesetzte/r</label>
                     <input type="text" id="vorgesetzter">
                 </div>
+                <div class="form-group">
+                    <label for="unterschrift">Unterschrift (Bild hochladen - optional)</label>
+                    <input type="file" id="unterschrift" accept="image/*" onchange="loadUnterschrift(this)">
+                    <div id="unterschriftPreview" style="margin-top: 10px; display: none;">
+                        <img id="unterschriftImg" style="max-width: 200px; border: 1px solid var(--color-border); border-radius: 4px;">
+                    </div>
+                </div>
                 <button type="button" class="btn btn-primary" onclick="nextStep(2)">Weiter →</button>
             </div>
 
@@ -556,9 +563,12 @@
             </footer>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         let currentStep = 1;
         let sonstigeKostenCounter = 0;
+        let unterschriftBild = null;
 
         function nextStep(step) {
             // Validate current step
@@ -793,13 +803,196 @@
             calculateAll();
         }
 
-        function generatePDF() {
-            alert('PDF-Generierung:\n\nDie vollständige PDF-Generierung erfordert eine serverseitige PHP-Implementierung mit einer Bibliothek wie TCPDF oder FPDF.\n\nAktuell würden die Daten an ein PHP-Script (z.B. generate_pdf.php) gesendet werden, das die PDF erstellt.\n\nAlternativ kann die Seite über den Browser gedruckt werden (Drucken → Als PDF speichern).\n\nFür die vollständige Implementierung benötigen Sie:\n1. Ein PHP-Backend mit PDF-Bibliothek\n2. Optional: Digitale Signatur\n3. Cloud-Speicher-Integration (z.B. Nextcloud API)');
-            
-            // Optional: Browser-Druck-Dialog öffnen
-            if (confirm('Möchten Sie die Seite jetzt über den Browser als PDF speichern?')) {
-                window.print();
+        function loadUnterschrift(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    unterschriftBild = e.target.result;
+                    document.getElementById('unterschriftImg').src = e.target.result;
+                    document.getElementById('unterschriftPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
             }
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Daten sammeln
+            const vorname = document.getElementById('vorname').value;
+            const nachname = document.getElementById('nachname').value;
+            const personalnummer = document.getElementById('personalnummer').value || '-';
+            const abteilung = document.getElementById('abteilung').value || '-';
+            const vorgesetzter = document.getElementById('vorgesetzter').value || '-';
+            const reisebeginn = new Date(document.getElementById('reisebeginn').value).toLocaleDateString('de-DE');
+            const beginnZeit = document.getElementById('uhrzeit_beginn').value;
+            const reiseende = new Date(document.getElementById('reiseende').value).toLocaleDateString('de-DE');
+            const endeZeit = document.getElementById('uhrzeit_ende').value;
+            const reiseziel = document.getElementById('reiseziel').value;
+            const reisezweck = document.getElementById('reisezweck').value;
+            const verkehrsmittel = document.getElementById('verkehrsmittel').value;
+            const kilometer = document.getElementById('kilometer').value || '0';
+            
+            // Kosten
+            const fahrtkosten = parseFloat(document.getElementById('result_fahrt').textContent.replace(' €', '').replace(',', '.'));
+            const uebernachtungskosten = parseFloat(document.getElementById('result_uebernachtung').textContent.replace(' €', '').replace(',', '.'));
+            const verpflegung = parseFloat(document.getElementById('result_verpflegung').textContent.replace(' €', '').replace(',', '.'));
+            const abzuege = parseFloat(document.getElementById('result_abzuege').textContent.replace('-', '').replace(' €', '').replace(',', '.'));
+            const sonstige = parseFloat(document.getElementById('result_sonstige').textContent.replace(' €', '').replace(',', '.'));
+            const gesamt = parseFloat(document.getElementById('result_gesamt').textContent.replace(' €', '').replace(',', '.'));
+            
+            // PDF Gestaltung
+            let y = 20;
+            
+            // Überschrift
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('REISEKOSTENABRECHNUNG 2026', 105, y, { align: 'center' });
+            y += 15;
+            
+            // Persönliche Daten
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Persönliche Daten', 20, y);
+            y += 7;
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Name: ${vorname} ${nachname}`, 20, y);
+            y += 5;
+            doc.text(`Personalnummer: ${personalnummer}`, 20, y);
+            y += 5;
+            doc.text(`Abteilung: ${abteilung}`, 20, y);
+            y += 5;
+            doc.text(`Vorgesetzte/r: ${vorgesetzter}`, 20, y);
+            y += 5;
+            doc.text(`Datum: ${new Date().toLocaleDateString('de-DE')}`, 20, y);
+            y += 10;
+            
+            // Reisedaten
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Reisedaten', 20, y);
+            y += 7;
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Reisebeginn: ${reisebeginn} um ${beginnZeit} Uhr`, 20, y);
+            y += 5;
+            doc.text(`Reiseende: ${reiseende} um ${endeZeit} Uhr`, 20, y);
+            y += 5;
+            doc.text(`Reiseziel: ${reiseziel}`, 20, y);
+            y += 5;
+            doc.text(`Reisezweck: ${reisezweck}`, 20, y);
+            y += 5;
+            doc.text(`Verkehrsmittel: ${verkehrsmittel}`, 20, y);
+            if (kilometer > 0) {
+                y += 5;
+                doc.text(`Kilometer: ${kilometer} km (Pauschale 0,30 €/km)`, 20, y);
+            }
+            y += 10;
+            
+            // Kostenübersicht - Tabelle
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Kostenübersicht', 20, y);
+            y += 7;
+            
+            // Tabellenkopf
+            doc.setFillColor(41, 128, 185);
+            doc.rect(20, y - 5, 170, 8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.text('Position', 25, y);
+            doc.text('Betrag', 160, y);
+            y += 10;
+            
+            // Tabelleninhalt
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, 'normal');
+            
+            const rows = [
+                ['Fahrtkosten', fahrtkosten.toFixed(2) + ' €'],
+                ['Übernachtungskosten', uebernachtungskosten.toFixed(2) + ' €'],
+                ['Verpflegungsmehraufwand', verpflegung.toFixed(2) + ' €'],
+                ['Abzüge für gestellte Mahlzeiten', '-' + abzuege.toFixed(2) + ' €'],
+                ['Sonstige Kosten', sonstige.toFixed(2) + ' €']
+            ];
+            
+            rows.forEach((row, index) => {
+                if (index % 2 === 0) {
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(20, y - 5, 170, 7, 'F');
+                }
+                doc.text(row[0], 25, y);
+                doc.text(row[1], 185, y, { align: 'right' });
+                y += 7;
+            });
+            
+            // Gesamtsumme
+            doc.setFont(undefined, 'bold');
+            doc.setFillColor(39, 174, 96);
+            doc.rect(20, y - 5, 170, 10, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(12);
+            doc.text('GESAMTKOSTEN', 25, y + 2);
+            doc.text(gesamt.toFixed(2) + ' €', 185, y + 2, { align: 'right' });
+            y += 15;
+            
+            // Sonstige Kosten Details
+            const sonstigeKostenElemente = document.querySelectorAll('.expense-item');
+            if (sonstigeKostenElemente.length > 0) {
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text('Aufschlüsselung sonstige Kosten', 20, y);
+                y += 7;
+                
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                sonstigeKostenElemente.forEach(element => {
+                    const beschreibung = element.querySelector('.sonstige-kosten-beschreibung').value;
+                    const betrag = element.querySelector('.sonstige-kosten-betrag').value;
+                    if (beschreibung && betrag > 0) {
+                        doc.text(`• ${beschreibung}: ${parseFloat(betrag).toFixed(2)} €`, 25, y);
+                        y += 5;
+                    }
+                });
+                y += 5;
+            }
+            
+            // Unterschrift
+            if (y > 240) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            y += 10;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text('Ort, Datum', 20, y);
+            doc.text('Unterschrift Antragsteller/in', 120, y);
+            y += 2;
+            doc.line(20, y, 80, y);
+            doc.line(120, y, 190, y);
+            
+            // Unterschrift Bild einfügen
+            if (unterschriftBild) {
+                y -= 15;
+                doc.addImage(unterschriftBild, 'PNG', 120, y, 40, 15);
+                y += 15;
+            }
+            
+            y += 10;
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Hinweis: Diese Abrechnung wurde mit der Reisekostenabrechnung 2026 App erstellt.', 105, y, { align: 'center' });
+            doc.text('Pauschalen gemäß BMF-Schreiben vom 05.12.2025 für das Jahr 2026.', 105, y + 4, { align: 'center' });
+            
+            // PDF speichern
+            const filename = `Reisekostenabrechnung_${nachname}_${new Date().toISOString().slice(0, 10)}.pdf`;
+            doc.save(filename);
         }
 
         // Initialize
