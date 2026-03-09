@@ -1007,7 +1007,7 @@
             
             // PDF speichern - Reiseende als Dateiname
             const reiseendedatum = document.getElementById('reiseende').value; // Format: YYYY-MM-DD
-            const filename = `Reisekostenabrechnung_${lastName}_${reiseendedatum}.pdf`;
+            const filename = `Reisekostenabrechnung_${nachname}_${vorname}_${reiseendedatum}.pdf`;
             doc.save(filename);
         }
 
