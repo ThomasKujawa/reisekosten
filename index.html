@@ -1006,8 +1006,8 @@
             doc.text('Pauschalen gemäß BMF-Schreiben vom 05.12.2025 für das Jahr 2026.', 105, y + 4, { align: 'center' });
             
             // PDF speichern - Reiseende als Dateiname
-            const endOfTripDate = document.getElementById('endOfTrip').value; // Format: YYYY-MM-DD
-            const filename = `TravelExpenseReport_${lastName}_${endOfTripDate}.pdf`;
+            const reiseendedatum = document.getElementById('reiseende').value; // Format: YYYY-MM-DD
+            const filename = `Reisekostenabrechnung_${lastName}_${reiseendedatum}.pdf`;
             doc.save(filename);
         }
 
