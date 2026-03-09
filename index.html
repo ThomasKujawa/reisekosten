@@ -1005,8 +1005,9 @@
             doc.text('Hinweis: Diese Abrechnung wurde mit der Reisekostenabrechnung 2026 App erstellt.', 105, y, { align: 'center' });
             doc.text('Pauschalen gemäß BMF-Schreiben vom 05.12.2025 für das Jahr 2026.', 105, y + 4, { align: 'center' });
             
-            // PDF speichern
-            const filename = `Reisekostenabrechnung_${nachname}_${new Date().toISOString().slice(0, 10)}.pdf`;
+            // PDF speichern - Reiseende als Dateiname
+            const endOfTripDate = document.getElementById('endOfTrip').value; // Format: YYYY-MM-DD
+            const filename = `TravelExpenseReport_${lastName}_${endOfTripDate}.pdf`;
             doc.save(filename);
         }
 
