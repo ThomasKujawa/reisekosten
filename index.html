@@ -704,6 +704,21 @@
             const kilometer = parseFloat(document.getElementById('kilometer').value) || 0;
             const fahrtkosten = kilometer * 0.30;
 
+            // Nächte (Übernachtungen) anhand der Datumswerte berechnen
+            const startDateOnly = new Date(beginn);
+            const endDateOnly = new Date(ende);
+
+            // Differenz in Tagen = Übernachtungen
+            const oneDayMs = 1000 * 60 * 60 * 24;
+            const diffInMs = endDateOnly.getTime() - startDateOnly.getTime();
+            let naechte = Math.round(diffInMs / oneDayMs);
+            if (naechte < 0) naechte = 0;
+
+            // Feld automatisch setzen
+            const uebernachtungenInput = document.getElementById('uebernachtungen');
+            uebernachtungenInput.value = naechte;
+
+
             // Übernachtungskosten
             const uebernachtungskosten = parseFloat(document.getElementById('uebernachtungskosten').value) || 0;
 
