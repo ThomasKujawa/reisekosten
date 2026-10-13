@@ -273,6 +273,75 @@
             display: none;
         }
 
+        .fahrt-item {
+            background: #f8f9fa;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .fahrt-item .remove-btn,
+        .beleg-item .remove-btn,
+        .add-btn {
+            min-height: 44px;
+        }
+
+        .field-error {
+            color: #a71d2a;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .error-summary {
+            background: #f8d7da;
+            border: 1px solid #f5c2c7;
+            color: #842029;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .error-summary ul {
+            margin-left: 20px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #664d03;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .beleg-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9fa;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .beleg-item .beleg-size {
+            color: var(--color-text-muted);
+            white-space: nowrap;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         .progress-indicator {
             display: flex;
             justify-content: space-between;
@@ -498,6 +567,32 @@
                     <input type="number" id="uebernachtungskosten" min="0" value="0" step="0.01" onchange="calculateAll()">
                 </div>
 
+                <div class="form-group" id="fahrtkostenGroup">
+                    <label id="fahrtkostenLabel">Fahrtkosten</label>
+                    <div id="fahrtPkwInfo" class="info-box" role="status" style="display: none;"></div>
+                    <div id="fahrtPositionenGroup" style="display: none;">
+                        <div class="info-box">
+                            <strong>Tatsächliche Fahrtkosten</strong>
+                            Erfassen Sie je Rechnung oder Ticket eine Position mit Beschreibung und Betrag in €.
+                        </div>
+                        <div id="fahrtPositionenContainer" role="group" aria-labelledby="fahrtkostenLabel"></div>
+                        <button type="button" class="add-btn" id="addFahrtPositionBtn" onclick="addFahrtPosition()">+ Fahrtkostenposition hinzufügen</button>
+                    </div>
+                    <div id="fahrtkostenFehler" class="error-summary" role="alert" tabindex="-1" hidden></div>
+                    <div id="fahrtkostenHinweis" class="warning-box" role="status" hidden></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="belegInput">Belege zu den Fahrtkosten (optional)</label>
+                    <input type="file" id="belegInput" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" multiple aria-describedby="belegHinweis" onchange="belegeAusgewaehlt(this)">
+                    <div id="belegHinweis" class="info-box" style="margin-top: 8px;">
+                        <strong>Datenschutz:</strong> Belege bleiben lokal in Ihrem Browser und werden nicht übertragen.
+                        Erlaubt: PDF, JPEG, PNG – max. 5 MB je Datei, max. 10 Dateien, insgesamt max. 20 MB.
+                    </div>
+                    <div id="belegFehler" class="error-summary" role="alert" hidden></div>
+                    <ul id="belegListe" style="list-style: none;" aria-label="Ausgewählte Belege"></ul>
+                </div>
+
                 <div class="form-group">
                     <label>Sonstige Kosten</label>
                     <div id="sonstigeKostenContainer"></div>
@@ -543,8 +638,12 @@
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="button" class="btn" onclick="nextStep(3)" style="flex: 1; background: #6c757d; color: white;">← Zurück</button>
-                    <button type="button" class="btn btn-success" onclick="generatePDF()" style="flex: 2;">📄 PDF erstellen</button>
                 </div>
+                <div class="btn-row" style="margin-top: 10px;">
+                    <button type="button" class="btn btn-success" onclick="generatePDF()" style="flex: 1 1 200px;">📄 PDF erstellen</button>
+                    <button type="button" class="btn btn-success" onclick="generateZip()" style="flex: 1 1 200px;">🗂️ ZIP-Abrechnungspaket (PDF + Belege)</button>
+                </div>
+                <p id="exportFehler" class="field-error" role="alert"></p>
             </div>
         </form>
         <div>
@@ -565,10 +664,14 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="reisekosten-logic.js"></script>
     <script>
         let currentStep = 1;
         let sonstigeKostenCounter = 0;
         let unterschriftBild = null;
+        let fahrtPositionCounter = 0;
+        let belege = []; // { name, type, size, file }
+        const RK = window.ReisekostenLogic;
 
         function nextStep(step) {
             // Validate current step
@@ -590,6 +693,19 @@
                     alert('Bitte füllen Sie alle Pflichtfelder aus.');
                     return;
                 }
+
+                if (currentStep === 2 && document.getElementById('verkehrsmittel').value === 'PKW') {
+                    const km = RK.parseKilometer(document.getElementById('kilometer').value);
+                    if (!km.ok) {
+                        document.getElementById('kilometer').style.borderColor = 'var(--color-danger)';
+                        alert(km.error);
+                        return;
+                    }
+                }
+
+                if (currentStep === 3 && !validateFahrtkosten(true)) {
+                    return;
+                }
             }
 
             // Hide all steps
@@ -608,6 +724,10 @@
             }
 
             currentStep = step;
+
+            if (step === 3) {
+                updateFahrtkostenUI();
+            }
 
             // Calculate when moving to step 3 or 4
             if (step >= 3) {
@@ -635,6 +755,229 @@
                 kilometerInput.required = false;
                 kilometerInput.value = '';
             }
+            updateFahrtkostenUI();
+        }
+
+        // ---- Fahrtkosten (Schritt 3) ----
+
+        function getFahrtPositionen() {
+            return Array.from(document.querySelectorAll('#fahrtPositionenContainer .fahrt-item')).map(item => ({
+                beschreibung: item.querySelector('.fahrt-beschreibung').value,
+                betrag: item.querySelector('.fahrt-betrag').value
+            }));
+        }
+
+        // Fahrtkosten explizit nach gewähltem Verkehrsmittel (ausgeblendete Eingaben zählen nicht)
+        function getFahrtkosten() {
+            return RK.berechneFahrtkosten(
+                document.getElementById('verkehrsmittel').value,
+                document.getElementById('kilometer').value,
+                getFahrtPositionen()
+            );
+        }
+
+        function updateFahrtkostenUI() {
+            const verkehrsmittel = document.getElementById('verkehrsmittel').value;
+            const istPkw = verkehrsmittel === 'PKW';
+            const positionen = !istPkw && verkehrsmittel !== '';
+            document.getElementById('fahrtPositionenGroup').style.display = positionen ? 'block' : 'none';
+            const pkwInfo = document.getElementById('fahrtPkwInfo');
+            pkwInfo.style.display = istPkw ? 'block' : 'none';
+            if (istPkw) {
+                const km = RK.parseKilometer(document.getElementById('kilometer').value);
+                pkwInfo.textContent = km.ok
+                    ? 'PKW (privat): ' + document.getElementById('kilometer').value + ' km × 0,30 € = ' + RK.formatCent(Math.round(km.km * RK.KM_SATZ_CENT)).replace('.', ',') + ' €'
+                    : 'PKW (privat): Fahrtkosten werden aus den Kilometern berechnet (0,30 €/km).';
+            }
+            if (positionen && document.querySelectorAll('#fahrtPositionenContainer .fahrt-item').length === 0) {
+                addFahrtPosition();
+            }
+            clearFahrtkostenFehler();
+        }
+
+        function clearFahrtkostenFehler() {
+            const box = document.getElementById('fahrtkostenFehler');
+            box.hidden = true;
+            box.textContent = '';
+            document.querySelectorAll('#fahrtPositionenContainer input').forEach(input => {
+                input.removeAttribute('aria-invalid');
+                input.removeAttribute('aria-describedby');
+                input.style.borderColor = '';
+            });
+            updateFahrtHinweis();
+        }
+
+        function updateFahrtHinweis() {
+            const box = document.getElementById('fahrtkostenHinweis');
+            const result = getFahrtkosten();
+            box.textContent = '';
+            const warnings = result.ok ? result.warnings : [];
+            warnings.forEach(w => {
+                const p = document.createElement('p');
+                p.textContent = 'Hinweis: ' + w;
+                box.appendChild(p);
+            });
+            box.hidden = warnings.length === 0;
+        }
+
+        function validateFahrtkosten(focusFirstError) {
+            clearFahrtkostenFehler();
+            const result = getFahrtkosten();
+            if (result.ok) return true;
+            const box = document.getElementById('fahrtkostenFehler');
+            const ul = document.createElement('ul');
+            result.errors.forEach(err => {
+                const li = document.createElement('li');
+                li.textContent = err.message;
+                ul.appendChild(li);
+            });
+            box.appendChild(ul);
+            box.hidden = false;
+            const items = document.querySelectorAll('#fahrtPositionenContainer .fahrt-item');
+            let first = null;
+            result.errors.forEach(err => {
+                if (err.index >= 0 && items[err.index]) {
+                    const input = items[err.index].querySelector(err.field === 'betrag' ? '.fahrt-betrag' : '.fahrt-beschreibung');
+                    input.setAttribute('aria-invalid', 'true');
+                    input.setAttribute('aria-describedby', 'fahrtkostenFehler');
+                    input.style.borderColor = 'var(--color-danger)';
+                    if (!first) first = input;
+                }
+            });
+            if (focusFirstError) {
+                (first || box).focus();
+            }
+            return false;
+        }
+
+        function addFahrtPosition() {
+            fahrtPositionCounter++;
+            const n = fahrtPositionCounter;
+            const container = document.getElementById('fahrtPositionenContainer');
+            const item = document.createElement('div');
+            item.className = 'fahrt-item';
+
+            const header = document.createElement('div');
+            header.className = 'expense-item-header';
+            const title = document.createElement('strong');
+            title.className = 'fahrt-titel';
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'remove-btn';
+            remove.textContent = 'Entfernen';
+            remove.addEventListener('click', () => removeFahrtPosition(item));
+            header.append(title, remove);
+
+            const groupDesc = document.createElement('div');
+            groupDesc.className = 'form-group';
+            const labelDesc = document.createElement('label');
+            labelDesc.htmlFor = 'fahrt-beschreibung-' + n;
+            labelDesc.textContent = 'Beschreibung (z. B. Zugticket Hinfahrt)';
+            const inputDesc = document.createElement('input');
+            inputDesc.type = 'text';
+            inputDesc.id = 'fahrt-beschreibung-' + n;
+            inputDesc.className = 'fahrt-beschreibung';
+            inputDesc.maxLength = 100;
+            inputDesc.autocomplete = 'off';
+            inputDesc.addEventListener('input', clearFahrtkostenFehler);
+            groupDesc.append(labelDesc, inputDesc);
+
+            const groupBetrag = document.createElement('div');
+            groupBetrag.className = 'form-group';
+            const labelBetrag = document.createElement('label');
+            labelBetrag.htmlFor = 'fahrt-betrag-' + n;
+            labelBetrag.textContent = 'Betrag in € (z. B. 49,90)';
+            const inputBetrag = document.createElement('input');
+            inputBetrag.type = 'text';
+            inputBetrag.inputMode = 'decimal';
+            inputBetrag.id = 'fahrt-betrag-' + n;
+            inputBetrag.className = 'fahrt-betrag';
+            inputBetrag.autocomplete = 'off';
+            inputBetrag.addEventListener('input', clearFahrtkostenFehler);
+            groupBetrag.append(labelBetrag, inputBetrag);
+
+            item.append(header, groupDesc, groupBetrag);
+            container.appendChild(item);
+            renumberFahrtPositionen();
+        }
+
+        function renumberFahrtPositionen() {
+            document.querySelectorAll('#fahrtPositionenContainer .fahrt-item').forEach((item, i) => {
+                item.querySelector('.fahrt-titel').textContent = 'Fahrtkostenposition #' + (i + 1);
+                item.querySelector('.remove-btn').setAttribute('aria-label', 'Fahrtkostenposition ' + (i + 1) + ' entfernen');
+            });
+        }
+
+        function removeFahrtPosition(item) {
+            item.remove();
+            renumberFahrtPositionen();
+            clearFahrtkostenFehler();
+            document.getElementById('addFahrtPositionBtn').focus();
+        }
+
+        // ---- Belege (lokal, keine Übertragung) ----
+
+        function belegFehlerAnzeigen(meldungen) {
+            const box = document.getElementById('belegFehler');
+            box.textContent = '';
+            meldungen.forEach(m => {
+                const p = document.createElement('p');
+                p.textContent = m;
+                box.appendChild(p);
+            });
+            box.hidden = meldungen.length === 0;
+        }
+
+        async function belegeAusgewaehlt(input) {
+            const dateien = Array.from(input.files || []);
+            const fehler = [];
+            for (const file of dateien) {
+                if (belege.some(b => b.name === file.name && b.size === file.size && b.file.lastModified === file.lastModified)) {
+                    fehler.push('„' + file.name + '“ wurde bereits ausgewählt.');
+                    continue;
+                }
+                let header;
+                try {
+                    header = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+                } catch (e) {
+                    fehler.push('„' + file.name + '“ konnte nicht gelesen werden.');
+                    continue;
+                }
+                const ergebnis = RK.fuegeBelegHinzu(belege, { name: file.name, type: file.type, size: file.size, file: file }, header);
+                if (!ergebnis.ok) fehler.push(ergebnis.error);
+            }
+            input.value = '';
+            belegFehlerAnzeigen(fehler);
+            renderBelege();
+        }
+
+        function entferneBelegAt(index) {
+            RK.entferneBeleg(belege, index);
+            belegFehlerAnzeigen([]);
+            renderBelege();
+            document.getElementById('belegInput').focus();
+        }
+
+        function renderBelege() {
+            const liste = document.getElementById('belegListe');
+            liste.textContent = '';
+            belege.forEach((beleg, index) => {
+                const li = document.createElement('li');
+                li.className = 'beleg-item';
+                const name = document.createElement('span');
+                name.textContent = beleg.name;
+                const size = document.createElement('span');
+                size.className = 'beleg-size';
+                size.textContent = RK.formatBytes(beleg.size);
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'remove-btn';
+                remove.textContent = 'Entfernen';
+                remove.setAttribute('aria-label', 'Beleg ' + beleg.name + ' entfernen');
+                remove.addEventListener('click', () => entferneBelegAt(index));
+                li.append(name, size, remove);
+                liste.appendChild(li);
+            });
         }
 
         function calculateDuration() {
@@ -701,8 +1044,8 @@
             const abzuege = (fruehstueck * 5.60) + (mittagessen * 11.20) + (abendessen * 11.20);
 
             // Fahrtkosten
-            const kilometer = parseFloat(document.getElementById('kilometer').value) || 0;
-            const fahrtkosten = kilometer * 0.30;
+            const fahrtErgebnis = getFahrtkosten();
+            const fahrtkosten = fahrtErgebnis.ok ? fahrtErgebnis.cents / 100 : 0;
 
             // Nächte (Übernachtungen) anhand der Datumswerte berechnen
             const startDateOnly = new Date(beginn);
@@ -730,7 +1073,7 @@
 
             // Update results
             if (currentStep === 4) {
-                document.getElementById('result_fahrt').textContent = fahrtkosten.toFixed(2) + ' €';
+                document.getElementById('result_fahrt').textContent = RK.formatCent(fahrtErgebnis.ok ? fahrtErgebnis.cents : 0) + ' €';
                 document.getElementById('result_uebernachtung').textContent = uebernachtungskosten.toFixed(2) + ' €';
                 document.getElementById('result_verpflegung').textContent = verpflegung.toFixed(2) + ' €';
                 document.getElementById('result_abzuege').textContent = '-' + abzuege.toFixed(2) + ' €';
@@ -815,7 +1158,59 @@
             }
 
             document.getElementById('summaryContent').innerHTML = html;
+            appendFahrtkostenSummary(document.getElementById('summaryContent'));
             calculateAll();
+        }
+
+        // Nutzereingaben werden hier ausschließlich per textContent eingefügt.
+        function appendFahrtkostenSummary(target) {
+            const fk = getFahrtkosten();
+            const verkehrsmittel = document.getElementById('verkehrsmittel').value;
+
+            const block = document.createElement('div');
+            block.style.cssText = 'background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 15px;';
+            const h3 = document.createElement('h3');
+            h3.style.marginBottom = '10px';
+            h3.textContent = 'Fahrtkosten';
+            block.appendChild(h3);
+
+            const addLine = (label, text) => {
+                const p = document.createElement('p');
+                const strong = document.createElement('strong');
+                strong.textContent = label;
+                p.append(strong, ' ' + text);
+                block.appendChild(p);
+            };
+
+            if (verkehrsmittel === 'PKW') {
+                addLine('Kilometerpauschale:', document.getElementById('kilometer').value + ' km × 0,30 € = ' + RK.formatCent(fk.cents) + ' €');
+            } else {
+                fk.items.forEach(item => addLine(item.beschreibung + ':', RK.formatCent(item.cents) + ' €'));
+            }
+            addLine('Summe Fahrtkosten:', RK.formatCent(fk.cents) + ' €');
+            fk.warnings.forEach(w => {
+                const p = document.createElement('p');
+                p.className = 'warning-box';
+                p.textContent = 'Hinweis: ' + w;
+                block.appendChild(p);
+            });
+            target.appendChild(block);
+
+            if (belege.length > 0) {
+                const namen = RK.erzeugeBelegNamen(belege.map(b => b.name));
+                const b2 = document.createElement('div');
+                b2.style.cssText = block.style.cssText;
+                const h = document.createElement('h3');
+                h.style.marginBottom = '10px';
+                h.textContent = 'Belegverzeichnis';
+                b2.appendChild(h);
+                belege.forEach((beleg, i) => {
+                    const p = document.createElement('p');
+                    p.textContent = (i + 1) + '. ' + beleg.name + ' (' + RK.formatBytes(beleg.size) + ') → ' + namen[i];
+                    b2.appendChild(p);
+                });
+                target.appendChild(b2);
+            }
         }
 
         function loadUnterschrift(input) {
@@ -830,9 +1225,15 @@
             }
         }
 
-        function generatePDF() {
+        function pdfText(text) {
+            return String(text).replace(/[^\x20-\xFF]/g, '?');
+        }
+
+        function buildPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            calculateAll();
+            const fahrt = getFahrtkosten();
             
             // Daten sammeln
             const vorname = document.getElementById('vorname').value;
@@ -848,6 +1249,12 @@
             const reisezweck = document.getElementById('reisezweck').value;
             const verkehrsmittel = document.getElementById('verkehrsmittel').value;
             const kilometer = document.getElementById('kilometer').value || '0';
+            const ensureSpace = (needed) => {
+                if (y + needed > 280) {
+                    doc.addPage();
+                    y = 20;
+                }
+            };
             
             // Kosten
             const fahrtkosten = parseFloat(document.getElementById('result_fahrt').textContent.replace(' €', '').replace(',', '.'));
@@ -955,9 +1362,52 @@
             doc.text(gesamt.toFixed(2) + ' €', 185, y + 2, { align: 'right' });
             y += 15;
             
+            // Fahrtkosten Details
+            doc.setTextColor(0, 0, 0);
+            ensureSpace(20);
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Aufschlüsselung Fahrtkosten', 20, y);
+            y += 7;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            if (verkehrsmittel === 'PKW') {
+                doc.text(`- Kilometerpauschale: ${kilometer} km × 0,30 € = ${RK.formatCent(fahrt.cents)} €`, 25, y);
+                y += 5;
+            } else {
+                fahrt.items.forEach(item => {
+                    const zeilen = doc.splitTextToSize(pdfText(`- ${item.beschreibung}`), 130);
+                    ensureSpace(zeilen.length * 5 + 2);
+                    doc.text(zeilen, 25, y);
+                    doc.text(RK.formatCent(item.cents) + ' €', 185, y, { align: 'right' });
+                    y += zeilen.length * 5;
+                });
+            }
+            y += 5;
+
+            // Belegverzeichnis
+            if (belege.length > 0) {
+                const belegNamen = RK.erzeugeBelegNamen(belege.map(b => b.name));
+                ensureSpace(20);
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text('Belegverzeichnis', 20, y);
+                y += 7;
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                belege.forEach((beleg, i) => {
+                    const zeilen = doc.splitTextToSize(pdfText(`${i + 1}. ${beleg.name} (${RK.formatBytes(beleg.size)}) - ZIP: Belege/${belegNamen[i]}`), 165);
+                    ensureSpace(zeilen.length * 5 + 2);
+                    doc.text(zeilen, 25, y);
+                    y += zeilen.length * 5;
+                });
+                y += 5;
+            }
+
             // Sonstige Kosten Details
-            const sonstigeKostenElemente = document.querySelectorAll('.expense-item');
+            const sonstigeKostenElemente = document.querySelectorAll('#sonstigeKostenContainer .expense-item');
             if (sonstigeKostenElemente.length > 0) {
+                ensureSpace(20);
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
@@ -1008,7 +1458,49 @@
             // PDF speichern - Reiseende als Dateiname
             const reiseendedatum = document.getElementById('reiseende').value; // Format: YYYY-MM-DD
             const filename = `Reisekostenabrechnung_${nachname}_${vorname}_${reiseendedatum}.pdf`;
+            return { doc, filename };
+        }
+
+        function exportFehlerAnzeigen(text) {
+            document.getElementById('exportFehler').textContent = text;
+        }
+
+        function generatePDF() {
+            exportFehlerAnzeigen('');
+            if (!getFahrtkosten().ok) {
+                exportFehlerAnzeigen('Die Fahrtkosten sind unvollständig oder ungültig. Bitte in Schritt 3 korrigieren.');
+                return;
+            }
+            const { doc, filename } = buildPDF();
             doc.save(filename);
+        }
+
+        async function generateZip() {
+            exportFehlerAnzeigen('');
+            if (!getFahrtkosten().ok) {
+                exportFehlerAnzeigen('Die Fahrtkosten sind unvollständig oder ungültig. Bitte in Schritt 3 korrigieren.');
+                return;
+            }
+            try {
+                const { doc, filename } = buildPDF();
+                const eintraege = [{ name: filename.replace(/[^A-Za-z0-9._-]+/g, '_'), data: new Uint8Array(doc.output('arraybuffer')) }];
+                const namen = RK.erzeugeBelegNamen(belege.map(b => b.name));
+                for (let i = 0; i < belege.length; i++) {
+                    const daten = new Uint8Array(await belege[i].file.arrayBuffer());
+                    eintraege.push({ name: 'Belege/' + namen[i], data: daten });
+                }
+                const zip = RK.erstelleZip(eintraege);
+                const url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = eintraege[0].name.replace(/\.pdf$/i, '') + '.zip';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } catch (e) {
+                exportFehlerAnzeigen('Das ZIP-Paket konnte nicht erstellt werden. Eine ausgewählte Datei ist eventuell nicht mehr lesbar; bitte Belege entfernen und erneut auswählen.');
+            }
         }
 
         // Initialize
